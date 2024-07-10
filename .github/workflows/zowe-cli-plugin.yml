@@ -1,0 +1,31 @@
+name: Zowe CLI Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  zowe-job:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install Zowe CLI
+      run: npm install -g @zowe/cli@latest
+    
+    - name: Run Zowe command
+      env:
+        ZOWE_OPT_HOST: 192.86.32.250
+        ZOWE_OPT_PORT: 10443
+        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+        ZOWE_OPT_REJECT_UNAUTHORIZED: false
+      run: zowe jobs list jobs
