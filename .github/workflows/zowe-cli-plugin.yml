@@ -1,4 +1,4 @@
-name: Zowe CLI Workflow
+name: Zowe CLI and USS Interaction
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  zowe-job:
+  zowe-and-uss-job:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,6 +21,9 @@ jobs:
     - name: Install Zowe CLI
       run: npm install -g @zowe/cli@latest
     
+    - name: Install sshpass
+      run: sudo apt-get install sshpass
+    
     - name: Run Zowe command
       env:
         ZOWE_OPT_HOST: 192.86.32.250
@@ -29,3 +32,15 @@ jobs:
         ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
       run: zowe jobs list jobs
+    
+    - name: Connect to USS and run commands
+      env:
+        ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+      run: |
+        sshpass -p "$ZOWE_PASSWORD" ssh $ZOWE_USERNAME@192.86.32.250 << EOF
+          # Your USS commands go here
+          pwd
+          ls -la
+          # Add more commands as needed
+        EOF
