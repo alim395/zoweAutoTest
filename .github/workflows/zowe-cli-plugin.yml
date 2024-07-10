@@ -21,17 +21,11 @@ jobs:
     - name: Install Zowe CLI
       run: npm install -g @zowe/cli@latest
     
-    - name: Configure Zowe CLI
-      env:
-        ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-      run: |
-        zowe profiles create zosmf-profile LearnCOBOL \
-          --host 192.86.32.250 \
-          --port 10443 \
-          --user $ZOWE_USERNAME \
-          --password $ZOWE_PASSWORD \
-          --reject-unauthorized false
-    
     - name: Run Zowe command
-      run: zowe jobs list jobs --zosmf-profile LearnCOBOL
+      env:
+        ZOWE_OPT_HOST: 192.86.32.250
+        ZOWE_OPT_PORT: 10443
+        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+        ZOWE_OPT_REJECT_UNAUTHORIZED: false
+      run: zowe jobs list jobs
