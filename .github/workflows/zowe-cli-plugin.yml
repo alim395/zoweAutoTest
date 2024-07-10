@@ -29,9 +29,9 @@ jobs:
         ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
       run: |
-        if ! zowe zos-files list uss-files "/z/${{ secrets.ZOWE_USERNAME }}/cobolcheck" &>/dev/null; then
+        if ! zowe zos-files list uss-files "/z/${{ secrets.ZOWE_USERNAME }}/cobol-check" &>/dev/null; then
           echo "Directory does not exist. Creating it..."
-          zowe zos-files create uss-dir "/z/${{ secrets.ZOWE_USERNAME }}/cobolcheck"
+          zowe zos-files create uss-dir "/z/${{ secrets.ZOWE_USERNAME }}/cobol-check"
         else
           echo "Directory already exists."
         fi
@@ -44,7 +44,7 @@ jobs:
         ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
       run: |
-        zowe zos-files upload dir-to-uss "./cobol-check" "/z/${{ secrets.ZOWE_USERNAME }}/cobolcheck" --recursive --binary-files "cobol-check-0.2.9.jar"
+        zowe zos-files upload dir-to-uss "./cobol-check" "/z/${{ secrets.ZOWE_USERNAME }}/cobol-check" --recursive --binary-files "cobol-check-0.2.9.jar"
     
     - name: Install sshpass
       run: sudo apt-get install sshpass
@@ -54,4 +54,4 @@ jobs:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
-        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'ls -la /z/$ZOWE_USERNAME/cobolcheck'
+        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'ls -la /z/$ZOWE_USERNAME/cobol-check'
