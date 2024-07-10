@@ -1,4 +1,4 @@
-name: Zowe CLI and USS Interaction
+name: Zowe CLI, USS Interaction, and File Upload
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  zowe-and-uss-job:
+  zowe-uss-and-upload-job:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,9 +21,6 @@ jobs:
     - name: Install Zowe CLI
       run: npm install -g @zowe/cli@latest
     
-    - name: Install sshpass
-      run: sudo apt-get install sshpass
-    
     - name: Run Zowe command
       env:
         ZOWE_OPT_HOST: 192.86.32.250
@@ -33,9 +30,23 @@ jobs:
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
       run: zowe jobs list jobs
     
-    - name: Connect to USS and run commands
+    - name: Upload cobol-check directory to USS
+      env:
+        ZOWE_OPT_HOST: 192.86.32.250
+        ZOWE_OPT_PORT: 10443
+        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+        ZOWE_OPT_REJECT_UNAUTHORIZED: false
+      run: |
+        cd cobol-check
+        zowe zos-files upload dir-to-uss "." "/z/${{ secrets.ZOWE_USERNAME }}/cobolcheck" --recursive --binary-files "cobol-check-0.2.9.jar"
+    
+    - name: Install sshpass
+      run: sudo apt-get install sshpass
+    
+    - name: Connect to USS and verify upload
       env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
-        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'pwd && ls -la'
+        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'ls -la /z/$ZOWE_USERNAME/cobolcheck'
