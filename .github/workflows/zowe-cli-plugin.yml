@@ -34,11 +34,21 @@ jobs:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
       run: .github/scripts/zowe_operations.sh
       
-    - name: Connect to USS and change file permissions
+    - name: Connect to USS and preform COBOL Check
       env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
         sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 '
-        pwd && ls -la
+        cd cobolcheck
+        ls -al
+        chmod +x cobolcheck
+        ls -al
+        cd scripts
+        ls -al
+        chmod +x linux_gnucobol_run_tests
+        cd..
+        ls
+        ./cobolcheck -p NUMBERS
+        cp CC##99.CBL "//'$ZOWE_USERNAME.CBL(NUMBERS)'"
         '
