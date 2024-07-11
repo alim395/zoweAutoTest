@@ -33,3 +33,15 @@ jobs:
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
       run: .github/scripts/zowe_operations.sh
+      
+    - name: Connect to USS and change file permissions
+      env:
+        ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+      run: |
+        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 '
+        cd /z/$ZOWE_USERNAME/cobolcheck
+        ls -al
+        chmod +x cobolcheck
+        ls -al
+        '
