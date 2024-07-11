@@ -22,7 +22,7 @@ jobs:
       run: npm install -g @zowe/cli@latest
     
     - name: Make script executable
-      run: chmod +x ./zowe_operations.sh
+      run: chmod +x .github/scripts/zowe_operations.sh
     
     - name: Run Zowe operations
       env:
@@ -32,4 +32,4 @@ jobs:
         ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-      run: ./zowe_operations.sh
+      run: .github/scripts/zowe_operations.sh
