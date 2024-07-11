@@ -1,4 +1,4 @@
-name: Zowe CLI, USS Interaction, and File Upload
+name: Zowe CLI Operations
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  zowe-uss-and-upload-job:
+  zowe-operations:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,40 +21,15 @@ jobs:
     - name: Install Zowe CLI
       run: npm install -g @zowe/cli@latest
     
-    - name: Check and create directory if not exists
+    - name: Make script executable
+      run: chmod +x ./zowe_operations.sh
+    
+    - name: Run Zowe operations
       env:
         ZOWE_OPT_HOST: 192.86.32.250
         ZOWE_OPT_PORT: 10443
         ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         ZOWE_OPT_REJECT_UNAUTHORIZED: false
-      run: |
-        LOWERCASE_USERNAME=$(echo "${{ secrets.ZOWE_USERNAME }}" | tr '[:upper:]' '[:lower:]')
-        if ! zowe zos-files list uss-files "/z/$LOWERCASE_USERNAME/cobolcheck" &>/dev/null; then
-          echo "Directory does not exist. Creating it..."
-          zowe zos-files create uss-directory /z/$LOWERCASE_USERNAME/cobolcheck
-        else
-          echo "Directory already exists."
-        fi
-
-    - name: Upload cobol-check directory to USS
-      env:
-        ZOWE_OPT_HOST: 192.86.32.250
-        ZOWE_OPT_PORT: 10443
-        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-        ZOWE_OPT_REJECT_UNAUTHORIZED: false
-      run: |
-        LOWERCASE_USERNAME=$(echo "${{ secrets.ZOWE_USERNAME }}" | tr '[:upper:]' '[:lower:]')
-        zowe zos-files upload dir-to-uss "./cobol-check" "/z/$LOWERCASE_USERNAME/cobolcheck" --recursive --binary-files "cobol-check-0.2.9.jar"
-    
-    - name: Install sshpass
-      run: sudo apt-get install sshpass
-    
-    - name: Connect to USS and verify upload
-      env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-      run: |
-        LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
-        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 "ls -la /z/$LOWERCASE_USERNAME/cobolcheck"
+      run: ./zowe_operations.sh
