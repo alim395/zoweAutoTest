@@ -49,7 +49,7 @@ jobs:
         pwd
         ls -al
         chmod +x linux_gnucobol_run_tests
-        cd..
+        cd ..
         pwd
         ls
         ./cobolcheck -p NUMBERS
