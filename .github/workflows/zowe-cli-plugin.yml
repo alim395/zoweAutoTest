@@ -50,5 +50,4 @@ jobs:
         cd..
         ls
         ./cobolcheck -p NUMBERS
-        cp CC##99.CBL "//'$ZOWE_USERNAME.CBL(NUMBERS)'"
         '
