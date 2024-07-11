@@ -40,14 +40,17 @@ jobs:
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
         sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 '
+        pwd
         cd cobolcheck
         ls -al
         chmod +x cobolcheck
         ls -al
         cd scripts
+        pwd
         ls -al
         chmod +x linux_gnucobol_run_tests
         cd..
+        pwd
         ls
         ./cobolcheck -p NUMBERS
         '
