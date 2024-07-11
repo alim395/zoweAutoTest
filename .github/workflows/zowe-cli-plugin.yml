@@ -40,8 +40,8 @@ jobs:
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
         sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 '
-        echo "Username: $ZOWE_USERNAME"
-        cd /z/$ZOWE_USERNAME/cobolcheck
+        LOWERCASE_USERNAME=$(echo $ZOWE_USERNAME | tr '[:upper:]' '[:lower:]')
+        cd /z/$LOWERCASE_USERNAME/cobolcheck
         ls -al
         chmod +x cobolcheck
         ls -al
