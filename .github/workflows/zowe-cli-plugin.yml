@@ -46,11 +46,9 @@ jobs:
         chmod +x cobolcheck
         ls -al
         cd scripts
-        pwd
         ls -al
         chmod +x linux_gnucobol_run_tests
         cd ..
         pwd
-        ls
         ./cobolcheck -p NUMBERS
         '
