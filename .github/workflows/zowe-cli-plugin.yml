@@ -52,4 +52,5 @@ jobs:
         cd ..
         pwd
         ls
+        ./cobolcheck -p NUMBERS
         '
