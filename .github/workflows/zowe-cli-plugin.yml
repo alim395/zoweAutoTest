@@ -1,11 +1,9 @@
 name: Zowe CLI Operations
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 jobs:
   zowe-operations:
     runs-on: ubuntu-latest
@@ -34,12 +32,12 @@ jobs:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
       run: .github/scripts/zowe_operations.sh
       
-    - name: Connect to USS and preform COBOL Check
+    - name: Connect to USS and perform COBOL Check
       env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
-        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 '
+        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 "
         pwd
         cd cobolcheck
         ls -al
@@ -51,4 +49,5 @@ jobs:
         cd ..
         pwd
         ./cobolcheck -p NUMBERS
-        '
+        cp CC##99.CBL \"//'${ZOWE_USERNAME}.CBL(NUMBERS)'\"
+        "
