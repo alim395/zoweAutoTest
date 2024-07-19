@@ -49,11 +49,18 @@ jobs:
           ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
           ZOWE_OPT_REJECT_UNAUTHORIZED: false
         run: |
-          # Get the last submitted job ID
-          JOB_ID=$(zowe jobs list jobs --prefix ${ZOWE_OPT_USER} --status RC | tail -n 1 | awk '{print $2}')
+          # List recent jobs
+          echo "Listing recent jobs:"
+          zowe jobs list jobs --prefix ${ZOWE_OPT_USER}
+
+          # Get the most recent job ID
+          JOB_ID=$(zowe jobs list jobs --prefix ${ZOWE_OPT_USER} | tail -n 1 | awk '{print $2}')
+          echo "Most recent job ID: $JOB_ID"
 
           # Check job status
-          zowe jobs view job-status-by-jobid $JOB_ID
+          echo "Checking job status:"
+          zowe jobs view job-status-by-jobid "$JOB_ID"
 
           # View job output
-          zowe jobs view sfbi $JOB_ID
+          echo "Viewing job output:"
+          zowe jobs view spool-file-by-id "$JOB_ID"
