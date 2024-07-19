@@ -19,8 +19,10 @@ jobs:
     - name: Install Zowe CLI
       run: npm install -g @zowe/cli@latest
     
-    - name: Make script executable
-      run: chmod +x .github/scripts/zowe_operations.sh
+    - name: Make scripts executable
+      run: |
+        chmod +x .github/scripts/zowe_operations.sh
+        chmod +x .github/scripts/mainframe_operations.sh
     
     - name: Run Zowe operations
       env:
@@ -32,34 +34,26 @@ jobs:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
       run: .github/scripts/zowe_operations.sh
       
-    - name: Connect to USS, perform COBOL Check, and submit JCL
+    - name: Perform mainframe operations
       env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
-        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 "
-        # Set up environment
-        export PATH=\$PATH:/usr/lpp/java/J8.0_64/bin
-        export JAVA_HOME=/usr/lpp/java/J8.0_64
-        export PATH=\$PATH:/usr/lpp/zowe/cli/node/bin
+        sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'bash -s' < .github/scripts/mainframe_operations.sh
+
+    - name: Check job status and output
+      env:
+        ZOWE_OPT_HOST: 192.86.32.250
+        ZOWE_OPT_PORT: 10443
+        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
+        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+        ZOWE_OPT_REJECT_UNAUTHORIZED: false
+      run: |
+        # Get the last submitted job ID
+        JOB_ID=$(zowe jobs list jobs --prefix ${ZOWE_OPT_USER} --status RC | tail -n 1 | awk '{print $2}')
         
-        # Check Java and Zowe CLI availability
-        java -version
-        zowe --version
+        # Check job status
+        zowe jobs view job-status-by-jobid $JOB_ID
         
-        pwd
-        cd cobolcheck
-        ls -al
-        chmod +x cobolcheck
-        ls -al
-        cd scripts
-        ls -al
-        chmod +x linux_gnucobol_run_tests
-        cd ..
-        pwd
-        ./cobolcheck -p NUMBERS
-        cp CC##99.CBL \"//'${ZOWE_USERNAME}.CBL(NUMBERS)'\"
-        
-        # Copy JCL file to mainframe
-        cp NUMBERS.JCL \"//'${ZOWE_USERNAME}.JCL(NUMBERS)'\"
-        "
+        # View job output
+        zowe jobs view sfbi $JOB_ID
