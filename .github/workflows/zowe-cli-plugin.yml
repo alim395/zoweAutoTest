@@ -62,27 +62,4 @@ jobs:
         
         # Copy JCL file to mainframe
         cp NUMBERS.JCL \"//'${ZOWE_USERNAME}.JCL(NUMBERS)'\"
-        
-        # Submit the JCL job
-        zowe jobs submit ds \"${ZOWE_USERNAME}.JCL(NUMBERS)\" --wait
         "
-
-    - name: Check job status and output
-      env:
-        ZOWE_OPT_HOST: 192.86.32.250
-        ZOWE_OPT_PORT: 10443
-        ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-        ZOWE_OPT_REJECT_UNAUTHORIZED: false
-      run: |
-        # Get the last submitted job ID
-        JOB_ID=$(zowe jobs list jobs --prefix ${ZOWE_OPT_USER} --status RC | tail -n 1 | awk '{print $2}')
-        
-        # Check job status
-        zowe jobs view job-status-by-jobid $JOB_ID
-        
-        # View job output
-        zowe jobs view sfbi $JOB_ID
-        
-        # View job output
-        zowe jobs view sfbi $JOB_ID
