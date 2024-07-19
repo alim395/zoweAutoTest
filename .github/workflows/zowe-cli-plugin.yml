@@ -38,6 +38,15 @@ jobs:
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
         sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 "
+        # Set up environment
+        export PATH=\$PATH:/usr/lpp/java/J8.0_64/bin
+        export JAVA_HOME=/usr/lpp/java/J8.0_64
+        export PATH=\$PATH:/usr/lpp/zowe/cli/node/bin
+        
+        # Check Java and Zowe CLI availability
+        java -version
+        zowe --version
+        
         pwd
         cd cobolcheck
         ls -al
@@ -71,6 +80,9 @@ jobs:
         
         # Check job status
         zowe jobs view job-status-by-jobid $JOB_ID
+        
+        # View job output
+        zowe jobs view sfbi $JOB_ID
         
         # View job output
         zowe jobs view sfbi $JOB_ID
