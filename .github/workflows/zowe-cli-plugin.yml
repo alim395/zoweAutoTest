@@ -40,27 +40,3 @@ jobs:
           ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         run: |
           sshpass -p "$ZOWE_PASSWORD" ssh -o StrictHostKeyChecking=no $ZOWE_USERNAME@192.86.32.250 'sh -s' < .github/scripts/mainframe_operations.sh
-
-      - name: Check job status and output
-        env:
-          ZOWE_OPT_HOST: 192.86.32.250
-          ZOWE_OPT_PORT: 10443
-          ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
-          ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-          ZOWE_OPT_REJECT_UNAUTHORIZED: false
-        run: |
-          # List recent jobs
-          echo "Listing recent jobs:"
-          zowe jobs list jobs --prefix ${ZOWE_OPT_USER}
-
-          # Get the most recent job ID
-          JOB_ID=$(zowe jobs list jobs --prefix ${ZOWE_OPT_USER} | tail -n 1 | awk '{print $2}')
-          echo "Most recent job ID: $JOB_ID"
-
-          # Check job status
-          echo "Checking job status:"
-          zowe jobs view job-status-by-jobid "$JOB_ID"
-
-          # View job output
-          echo "Viewing job output:"
-          zowe jobs view spool-file-by-id "$JOB_ID"
