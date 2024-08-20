@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Zowe operations
         env:
-          ZOWE_OPT_HOST: 192.86.32.250
+          ZOWE_OPT_HOST: 204.90.115.200
           ZOWE_OPT_PORT: 10443
           ZOWE_OPT_USER: ${{ secrets.ZOWE_USERNAME }}
           ZOWE_OPT_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
