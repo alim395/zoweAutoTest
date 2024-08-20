@@ -15,21 +15,27 @@ if [ -d "cobolcheck" ]; then
   echo "Changed to $(pwd)"
   ls -al
 else
-  echo "cobolcheck directory not found"
-  exit 1
-fi
-
-# Check for cobolcheck executable
-if [ ! -x "./cobolcheck" ]; then
-  echo "cobolcheck executable not found or not executable"
-  exit 1
+  echo "Current directory: $(pwd)"
+  ls -al
 fi
 
 # Function to run cobolcheck and copy files
 run_cobolcheck() {
   local program=$1
   echo "Running cobolcheck for $program"
-  ./cobolcheck -p $program
+  
+  # Check if cobolcheck is a file
+  if [ -f "./cobolcheck" ]; then
+    # Try to run it as a script
+    sh ./cobolcheck -p $program
+  elif [ -f "./bin/cobolcheck" ]; then
+    # Try to run it from the bin directory
+    ./bin/cobolcheck -p $program
+  else
+    echo "cobolcheck not found in current directory or bin subdirectory"
+    return 1
+  fi
+
   if [ -f "CC##99.CBL" ]; then
     cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"
   else
