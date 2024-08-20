@@ -30,22 +30,33 @@ run_cobolcheck() {
   echo "Running cobolcheck for $program"
   
   # Run cobolcheck
-  ./cobolcheck -p $program
-  
-  # Check if CC##99.CBL was created
-  if [ -f "CC##99.CBL" ]; then
-    cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"
-    echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+  if ./cobolcheck -p $program; then
+    echo "Cobolcheck completed successfully for $program"
+    
+    # Check if CC##99.CBL was created
+    if [ -f "CC##99.CBL" ]; then
+      # Copy to the MVS dataset
+      if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"; then
+        echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+      else
+        echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+      fi
+    else
+      echo "CC##99.CBL not found for $program"
+    fi
+    
+    # Copy the JCL file if it exists
+    if [ -f "${program}.JCL" ]; then
+      if cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"; then
+        echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
+      else
+        echo "Failed to copy ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
+      fi
+    else
+      echo "${program}.JCL not found"
+    fi
   else
-    echo "CC##99.CBL not found for $program"
-  fi
-  
-  # Check if JCL file exists and copy it
-  if [ -f "${program}.JCL" ]; then
-    cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"
-    echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
-  else
-    echo "${program}.JCL not found"
+    echo "Cobolcheck failed for $program"
   fi
 }
 
