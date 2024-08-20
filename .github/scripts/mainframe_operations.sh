@@ -57,14 +57,9 @@ run_cobolcheck() {
   fi
 }
 
-
 # Run for each program
 for program in NUMBERS EMPPAY DEPTPAY; do
-  if ./cobolcheck -p $program; then
-    echo "Cobolcheck completed successfully for $program"
-  else
-    echo "Cobolcheck failed for $program"
-  fi
+  run_cobolcheck $program
 done
 
 echo "Mainframe operations completed"
