@@ -10,14 +10,19 @@ export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
 java -version
 
 # Change to the cobolcheck directory
-if [ -d "cobolcheck" ]; then
-  cd cobolcheck
-  echo "Changed to $(pwd)"
-  ls -al
-else
-  echo "Current directory: $(pwd)"
-  ls -al
-fi
+cd cobolcheck
+echo "Changed to $(pwd)"
+ls -al
+
+# Make cobolcheck executable
+chmod +x cobolcheck
+echo "Made cobolcheck executable"
+
+# Make script in scripts directory executable
+cd scripts
+chmod +x linux_gnucobol_run_tests
+echo "Made linux_gnucobol_run_tests executable"
+cd ..
 
 # Function to run cobolcheck and copy files
 run_cobolcheck() {
@@ -25,7 +30,7 @@ run_cobolcheck() {
   echo "Running cobolcheck for $program"
   
   # Run cobolcheck
-  java -jar cobol-check-0.2.9.jar -p $program
+  ./cobolcheck -p $program
   
   # Check if CC##99.CBL was created
   if [ -f "CC##99.CBL" ]; then
