@@ -26,7 +26,7 @@ cd ..
 
 # Function to run cobolcheck and copy files
 run_cobolcheck() {
-  local program=$1
+  program=$1
   echo "Running cobolcheck for $program"
   
   # Run cobolcheck
@@ -51,7 +51,11 @@ run_cobolcheck() {
 
 # Run for each program
 for program in NUMBERS EMPPAY DEPTPAY; do
-  run_cobolcheck $program
+  if ./cobolcheck -p $program; then
+    echo "Cobolcheck completed successfully for $program"
+  else
+    echo "Cobolcheck failed for $program"
+  fi
 done
 
 echo "Mainframe operations completed"
