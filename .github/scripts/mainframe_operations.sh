@@ -24,25 +24,21 @@ run_cobolcheck() {
   local program=$1
   echo "Running cobolcheck for $program"
   
-  # Check if cobolcheck is a file
-  if [ -f "./cobolcheck" ]; then
-    # Try to run it as a script
-    sh ./cobolcheck -p $program
-  elif [ -f "./bin/cobolcheck" ]; then
-    # Try to run it from the bin directory
-    ./bin/cobolcheck -p $program
-  else
-    echo "cobolcheck not found in current directory or bin subdirectory"
-    return 1
-  fi
-
+  # Run cobolcheck
+  java -jar cobol-check-0.2.9.jar -p $program
+  
+  # Check if CC##99.CBL was created
   if [ -f "CC##99.CBL" ]; then
     cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"
+    echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
   else
     echo "CC##99.CBL not found for $program"
   fi
+  
+  # Check if JCL file exists and copy it
   if [ -f "${program}.JCL" ]; then
     cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"
+    echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
   else
     echo "${program}.JCL not found"
   fi
