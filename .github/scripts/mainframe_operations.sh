@@ -10,7 +10,7 @@ export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
 java -version
 
 # Set ZOWE_USERNAME
-ZOWE_USERNAME=$ZOWE_USERNAME
+ZOWE_USERNAME="Z36963"  # Replace with the actual username or dataset prefix
 
 # Change to the cobolcheck directory
 cd cobolcheck
