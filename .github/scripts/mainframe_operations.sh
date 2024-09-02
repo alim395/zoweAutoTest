@@ -1,6 +1,10 @@
 #!/bin/bash
 # mainframe_operations.sh
 
+# Check ZOWE
+which zowe
+zowe --version
+
 # Set up environment
 export PATH=$PATH:/usr/lpp/java/J8.0_64/bin
 export JAVA_HOME=/usr/lpp/java/J8.0_64
