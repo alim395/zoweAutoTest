@@ -63,20 +63,20 @@ run_cobolcheck() {
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status using SDSF STATUS command
+      # Check job status using tsocmd
       echo "Checking job status..."
       i=0
       while [ $i -lt 12 ]; do
-        status_output=$(sdsf "status $job_id" 2>&1)
+        status_output=$(tsocmd "STATUS ${job_id}" 2>&1)
         echo "Job status: $status_output"
         
         if echo "$status_output" | grep -q "NOT FOUND"; then
           echo "Job not found. It may have completed quickly."
           break
-        elif echo "$status_output" | grep -q "OUTPUT"; then
+        elif echo "$status_output" | grep -q "ON OUTPUT QUEUE"; then
           echo "Job completed. Attempting to fetch output..."
           break
-        elif echo "$status_output" | grep -q "ACTIVE"; then
+        elif echo "$status_output" | grep -q "EXECUTING"; then
           echo "Job is still running."
         else
           echo "Unexpected job status. Please check manually."
@@ -87,13 +87,21 @@ run_cobolcheck() {
         sleep 5
       done
       
-      # Try to fetch output
+      # Try to fetch output using tsocmd
       output_file="${program}_output.txt"
-      if sdsf "output $job_id" > "$output_file" 2>/dev/null; then
+      tsocmd "RECEIVE INDSN('${ZOWE_USERNAME}.${job_id}.JESMSGLG')" > "$output_file" 2>/dev/null
+      if [ -s "$output_file" ]; then
         echo "Job output retrieved and saved to $output_file"
         cat "$output_file"
       else
-        echo "Unable to fetch job output. The job may have failed or output may not be available."
+        echo "Unable to fetch job output. Trying alternative method..."
+        tsocmd "OUTPUT ${job_id}" > "$output_file" 2>/dev/null
+        if [ -s "$output_file" ]; then
+          echo "Job output retrieved using alternative method and saved to $output_file"
+          cat "$output_file"
+        else
+          echo "Unable to fetch job output. The job may have failed or output may not be available."
+        fi
       fi
       
       if [ $i -eq 12 ]; then
@@ -111,7 +119,7 @@ run_cobolcheck() {
 copy_to_dataset() {
   source=$1
   target=$2
-  if cp "$source" "//'$target'" 2>/dev/null; then
+  if tsocmd "OPUT '${source}' '${target}' TEXT" 2>/dev/null; then
     echo "Copied $source to $target"
   else
     echo "Failed to copy $source to $target. Check permissions and dataset existence."
