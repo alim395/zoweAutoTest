@@ -63,37 +63,38 @@ run_cobolcheck() {
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status using jobs command
+      # Check job status using operator display command
       echo "Checking job status..."
-      for i in {1..12}; do  # Try for 1 minute (5 seconds * 12)
-        jobs_output=$(jobs -l | grep "$job_id")
-        if [ -n "$jobs_output" ]; then
-          echo "Current job status: $jobs_output"
-          if echo "$jobs_output" | grep -q "Done"; then
-            echo "Job completed."
-            break
-          elif echo "$jobs_output" | grep -q "Running"; then
-            echo "Job is still running."
-          elif echo "$jobs_output" | grep -q "Stopped"; then
-            echo "Job is stopped or suspended."
-            break
-          fi
+      for i in $(seq 1 12); do  # Try for 1 minute (5 seconds * 12)
+        status_output=$(tso -t "d j,${job_id}" 2>&1)
+        echo "Job status: $status_output"
+        
+        if echo "$status_output" | grep -q "NOT FOUND"; then
+          echo "Job not found. It may have completed quickly."
+          break
+        elif echo "$status_output" | grep -q "ON OUTPUT QUEUE"; then
+          echo "Job completed. Attempting to fetch output..."
+          break
+        elif echo "$status_output" | grep -q "EXECUTING"; then
+          echo "Job is still running."
         else
-          echo "Job not found in current session. It may have completed or be running in a different session."
+          echo "Unexpected job status. Please check manually."
           break
         fi
+        
         sleep 5
       done
       
-      # Try to fetch output regardless of job status
-      if cat "//'${ZOWE_USERNAME}.${job_id}.JESMSGLG'" 2>/dev/null; then
-        echo "Job output retrieved."
+      # Try to fetch output
+      if tso -t "RECEIVE USERID() INDSN('${ZOWE_USERNAME}.${job_id}.JESMSGLG')" > "${program}_output.txt" 2>/dev/null; then
+        echo "Job output retrieved and saved to ${program}_output.txt"
+        cat "${program}_output.txt"
       else
         echo "Unable to fetch job output. The job may have failed or output may not be available."
       fi
       
       if [ $i -eq 12 ]; then
-        echo "Job status check timed out. Last known status: $jobs_output"
+        echo "Job status check timed out. Last known status: $status_output"
       fi
     else
       echo "Failed to extract job ID. Job may not have been submitted successfully."
