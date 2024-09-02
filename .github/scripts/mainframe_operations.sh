@@ -57,8 +57,8 @@ run_cobolcheck() {
     job_output=$(submit "${program}.JCL" 2>&1)
     echo "Job submission output: $job_output"
     
-    # Extract job ID
-    job_id=$(echo "$job_output" | awk '{print $2}')
+    # Extract job ID and convert to lowercase
+    job_id=$(echo "$job_output" | awk '{print tolower($2)}')
     
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
