@@ -1,10 +1,6 @@
 #!/bin/bash
 # mainframe_operations.sh
 
-# Check ZOWE
-which zowe
-zowe --version
-
 # Set up environment
 export PATH=$PATH:/usr/lpp/java/J8.0_64/bin
 export JAVA_HOME=/usr/lpp/java/J8.0_64
@@ -31,54 +27,51 @@ chmod +x linux_gnucobol_run_tests
 echo "Made linux_gnucobol_run_tests executable"
 cd ..
 
-# Function to run cobolcheck and copy files
+# Function to run cobolcheck and submit job
 run_cobolcheck() {
   program=$1
   echo "Running cobolcheck for $program"
   
-  # Run cobolcheck, but don't exit if it fails
+  # Run cobolcheck
   ./cobolcheck -p $program
   echo "Cobolcheck execution completed for $program (exceptions may have occurred)"
   
-  # Check if CC##99.CBL was created, regardless of cobolcheck exit status
+  # Copy files
   if [ -f "CC##99.CBL" ]; then
-    # Copy to the MVS dataset
-    if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"; then
-      echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
-    else
-      echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
-    fi
+    cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"
+    echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
   else
     echo "CC##99.CBL not found for $program"
   fi
   
-  # Copy the JCL file if it exists
   if [ -f "${program}.JCL" ]; then
-    if cp ${program}.JCL "//'Z36963.JCL($program)'"; then
-      echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
-    else
-      echo "Failed to copy ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
-    fi
+    cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"
+    echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
   else
     echo "${program}.JCL not found"
   fi
+
   # Submit job
   if [ -f "${program}.JCL" ]; then
     echo "Submitting job for $program"
     job_output=$(submit "${program}.JCL" 2>&1)
-    if [ $? -eq 0 ]; then
-      job_id=$(echo "$job_output" | grep -oP 'JOB\d+')
+    echo "Job submission output: $job_output"
+    
+    # Extract job ID (adjust this based on the actual output format)
+    job_id=$(echo "$job_output" | awk '/JOB[0-9]{5}/ {print $2}')
+    
+    if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status
+      # Check job status using SDSF interface
       echo "Checking job status..."
-      for i in {1..10}; do  # Try 10 times, waiting 5 seconds between each attempt
-        status=$(jesstat "$job_id" | awk '{print $6}')
+      for i in {1..10}; do
+        status=$(sdsf -c "ST $job_id" | awk 'NR==4 {print $6}')
         echo "Current status: $status"
         if [[ "$status" == "OUTPUT" ]]; then
           echo "Job completed. Fetching output..."
-          # You might need to adjust this part to fetch and display job output
-          cat "//'SYS00006.T${job_id}.OUTLIST'"
+          sdsf -c "OUT $job_id" > "${program}_output.txt"
+          cat "${program}_output.txt"
           break
         elif [[ "$status" == "ABEND" || "$status" == "CANCELED" ]]; then
           echo "Job failed with status: $status"
@@ -91,13 +84,11 @@ run_cobolcheck() {
         echo "Job did not complete within the expected time. Last known status: $status"
       fi
     else
-      echo "Failed to submit job for $program"
-      echo "Error output: $job_output"
+      echo "Failed to extract job ID. Job may not have been submitted successfully."
     fi
   else
     echo "JCL file for $program not found. Job not submitted."
   fi
-  
 }
 
 # Run for each program
