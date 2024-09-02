@@ -63,24 +63,30 @@ run_cobolcheck() {
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status using JESSPOOL
+      # Check job status using status command
       echo "Checking job status..."
-      for i in {1..10}; do
-        status=$(ls -l "//'SYS1.MAN1'" | grep "$job_id" | awk '{print $NF}')
-        echo "Current status: $status"
-        if [[ "$status" == "OUTPUT" ]]; then
+      for i in {1..12}; do  # Try for 1 minute (5 seconds * 12)
+        status_output=$(status ${job_id} 2>&1)
+        echo "Status command output: $status_output"
+        
+        if echo "$status_output" | grep -q "NOT FOUND"; then
+          echo "Job not found. It may have completed quickly."
+          break
+        elif echo "$status_output" | grep -q "ON OUTPUT QUEUE"; then
           echo "Job completed. Attempting to fetch output..."
           cat "//'${ZOWE_USERNAME}.${job_id}.JESMSGLG'" 2>/dev/null || echo "Unable to fetch job output"
           break
-        elif [[ "$status" == "ABEND" || "$status" == "CANCELED" ]]; then
-          echo "Job failed with status: $status"
+        elif echo "$status_output" | grep -q "ABEND\|CANCELED"; then
+          echo "Job failed. Status: $status_output"
           break
         fi
+        
+        echo "Job still running. Waiting 5 seconds before checking again..."
         sleep 5
       done
       
-      if [[ -z "$status" ]]; then
-        echo "Job status could not be determined. It may still be running or may have completed."
+      if [ $i -eq 12 ]; then
+        echo "Job status check timed out. Last known status: $status_output"
       fi
     else
       echo "Failed to extract job ID. Job may not have been submitted successfully."
