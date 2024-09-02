@@ -50,7 +50,7 @@ run_cobolcheck() {
   
   # Copy the JCL file if it exists
   if [ -f "${program}.JCL" ]; then
-    if cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"; then
+    if cp ${program}.JCL "//'Z36963.JCL($program)'"; then
       echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
     else
       echo "Failed to copy ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
@@ -61,7 +61,7 @@ run_cobolcheck() {
    # Submit job
     if [ -f "${program}.JCL" ]; then
       echo "Submitting job for $program"
-      job_id=$(zowe jobs submit data-set "${ZOWE_USERNAME}.JCL($program)" --rff jobid --rft string)
+      job_id=$(zowe jobs submit data-set "Z36963.JCL($program)" --rff jobid --rft string)
       if [ $? -eq 0 ]; then
         echo "Job submitted successfully. Job ID: $job_id"
         
