@@ -63,32 +63,35 @@ run_cobolcheck() {
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status using operator display command
+      # Check job status using SDSF STATUS command
       echo "Checking job status..."
-      for i in $(seq 1 12); do  # Try for 1 minute (5 seconds * 12)
-        status_output=$(tso -t "d j,${job_id}" 2>&1)
+      i=0
+      while [ $i -lt 12 ]; do
+        status_output=$(sdsf "status $job_id" 2>&1)
         echo "Job status: $status_output"
         
         if echo "$status_output" | grep -q "NOT FOUND"; then
           echo "Job not found. It may have completed quickly."
           break
-        elif echo "$status_output" | grep -q "ON OUTPUT QUEUE"; then
+        elif echo "$status_output" | grep -q "OUTPUT"; then
           echo "Job completed. Attempting to fetch output..."
           break
-        elif echo "$status_output" | grep -q "EXECUTING"; then
+        elif echo "$status_output" | grep -q "ACTIVE"; then
           echo "Job is still running."
         else
           echo "Unexpected job status. Please check manually."
           break
         fi
         
+        i=$((i + 1))
         sleep 5
       done
       
       # Try to fetch output
-      if tso -t "RECEIVE USERID() INDSN('${ZOWE_USERNAME}.${job_id}.JESMSGLG')" > "${program}_output.txt" 2>/dev/null; then
-        echo "Job output retrieved and saved to ${program}_output.txt"
-        cat "${program}_output.txt"
+      output_file="${program}_output.txt"
+      if sdsf "output $job_id" > "$output_file" 2>/dev/null; then
+        echo "Job output retrieved and saved to $output_file"
+        cat "$output_file"
       else
         echo "Unable to fetch job output. The job may have failed or output may not be available."
       fi
@@ -104,9 +107,22 @@ run_cobolcheck() {
   fi
 }
 
+# Function to copy file to dataset
+copy_to_dataset() {
+  source=$1
+  target=$2
+  if cp "$source" "//'$target'" 2>/dev/null; then
+    echo "Copied $source to $target"
+  else
+    echo "Failed to copy $source to $target. Check permissions and dataset existence."
+  fi
+}
+
 # Run for each program
 for program in NUMBERS EMPPAY DEPTPAY; do
-  run_cobolcheck $program
+  run_cobolcheck "$program"
+  copy_to_dataset "CC##99.CBL" "${ZOWE_USERNAME}.CBL($program)"
+  copy_to_dataset "${program}.JCL" "${ZOWE_USERNAME}.JCL($program)"
 done
 
 echo "Mainframe operations completed"
