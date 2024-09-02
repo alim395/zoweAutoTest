@@ -57,21 +57,20 @@ run_cobolcheck() {
     job_output=$(submit "${program}.JCL" 2>&1)
     echo "Job submission output: $job_output"
     
-    # Extract job ID (adjust this based on the actual output format)
-    job_id=$(echo "$job_output" | awk '/JOB[0-9]{5}/ {print $2}')
+    # Extract job ID
+    job_id=$(echo "$job_output" | awk '{print $2}')
     
     if [ -n "$job_id" ]; then
       echo "Job submitted successfully. Job ID: $job_id"
       
-      # Check job status using SDSF interface
+      # Check job status using JESSPOOL
       echo "Checking job status..."
       for i in {1..10}; do
-        status=$(sdsf -c "ST $job_id" | awk 'NR==4 {print $6}')
+        status=$(ls -l "//'SYS1.MAN1'" | grep "$job_id" | awk '{print $NF}')
         echo "Current status: $status"
         if [[ "$status" == "OUTPUT" ]]; then
-          echo "Job completed. Fetching output..."
-          sdsf -c "OUT $job_id" > "${program}_output.txt"
-          cat "${program}_output.txt"
+          echo "Job completed. Attempting to fetch output..."
+          cat "//'${ZOWE_USERNAME}.${job_id}.JESMSGLG'" 2>/dev/null || echo "Unable to fetch job output"
           break
         elif [[ "$status" == "ABEND" || "$status" == "CANCELED" ]]; then
           echo "Job failed with status: $status"
@@ -80,8 +79,8 @@ run_cobolcheck() {
         sleep 5
       done
       
-      if [[ "$status" != "OUTPUT" && "$status" != "ABEND" && "$status" != "CANCELED" ]]; then
-        echo "Job did not complete within the expected time. Last known status: $status"
+      if [[ -z "$status" ]]; then
+        echo "Job status could not be determined. It may still be running or may have completed."
       fi
     else
       echo "Failed to extract job ID. Job may not have been submitted successfully."
