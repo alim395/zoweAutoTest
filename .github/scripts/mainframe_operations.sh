@@ -27,42 +27,56 @@ chmod +x linux_gnucobol_run_tests
 echo "Made linux_gnucobol_run_tests executable"
 cd ..
 
-# Function to run cobolcheck and copy files
+# Function to run cobolcheck and submit job
 run_cobolcheck() {
   program=$1
   echo "Running cobolcheck for $program"
   
-  # Run cobolcheck, but don't exit if it fails
+  # Run cobolcheck
   ./cobolcheck -p $program
   echo "Cobolcheck execution completed for $program (exceptions may have occurred)"
   
-  # Check if CC##99.CBL was created, regardless of cobolcheck exit status
+  # Copy files
   if [ -f "CC##99.CBL" ]; then
-    # Copy to the MVS dataset
-    if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"; then
-      echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
-    else
-      echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
-    fi
+    cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"
+    echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
   else
     echo "CC##99.CBL not found for $program"
   fi
   
-  # Copy the JCL file if it exists
   if [ -f "${program}.JCL" ]; then
-    if cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"; then
-      echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
-    else
-      echo "Failed to copy ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
-    fi
+    cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"
+    echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
   else
     echo "${program}.JCL not found"
+  fi
+
+  # Submit job
+  if [ -f "${program}.JCL" ]; then
+    echo "Submitting job for $program"
+    job_output=$(submit "${program}.JCL" 2>&1)
+    echo "Job submission output: $job_output"
+  else
+    echo "JCL file for $program not found. Job not submitted."
+  fi
+}
+
+# Function to copy file to dataset
+copy_to_dataset() {
+  source=$1
+  target=$2
+  if tsocmd "OPUT '${source}' '${target}' TEXT" 2>/dev/null; then
+    echo "Copied $source to $target"
+  else
+    echo "Failed to copy $source to $target. Check permissions and dataset existence."
   fi
 }
 
 # Run for each program
 for program in NUMBERS EMPPAY DEPTPAY; do
-  run_cobolcheck $program
+  run_cobolcheck "$program"
+  copy_to_dataset "CC##99.CBL" "${ZOWE_USERNAME}.CBL($program)"
+  copy_to_dataset "${program}.JCL" "${ZOWE_USERNAME}.JCL($program)"
 done
 
 echo "Mainframe operations completed"
