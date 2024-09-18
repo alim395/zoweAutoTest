@@ -56,60 +56,6 @@ run_cobolcheck() {
     echo "Submitting job for $program"
     job_output=$(submit "${program}.JCL" 2>&1)
     echo "Job submission output: $job_output"
-    
-    # Extract job ID and convert to lowercase
-    job_id=$(echo "$job_output" | awk '{print tolower($2)}')
-    
-    if [ -n "$job_id" ]; then
-      echo "Job submitted successfully. Job ID: $job_id"
-      
-      # Check job status using tsocmd
-      echo "Checking job status..."
-      i=0
-      while [ $i -lt 12 ]; do
-        status_output=$(tsocmd "STATUS ${job_id}" 2>&1)
-        echo "Job status: $status_output"
-        
-        if echo "$status_output" | grep -q "NOT FOUND"; then
-          echo "Job not found. It may have completed quickly."
-          break
-        elif echo "$status_output" | grep -q "ON OUTPUT QUEUE"; then
-          echo "Job completed. Attempting to fetch output..."
-          break
-        elif echo "$status_output" | grep -q "EXECUTING"; then
-          echo "Job is still running."
-        else
-          echo "Unexpected job status. Please check manually."
-          break
-        fi
-        
-        i=$((i + 1))
-        sleep 5
-      done
-      
-      # Try to fetch output using tsocmd
-      output_file="${program}_output.txt"
-      tsocmd "RECEIVE INDSN('${ZOWE_USERNAME}.${job_id}.JESMSGLG')" > "$output_file" 2>/dev/null
-      if [ -s "$output_file" ]; then
-        echo "Job output retrieved and saved to $output_file"
-        cat "$output_file"
-      else
-        echo "Unable to fetch job output. Trying alternative method..."
-        tsocmd "OUTPUT ${job_id}" > "$output_file" 2>/dev/null
-        if [ -s "$output_file" ]; then
-          echo "Job output retrieved using alternative method and saved to $output_file"
-          cat "$output_file"
-        else
-          echo "Unable to fetch job output. The job may have failed or output may not be available."
-        fi
-      fi
-      
-      if [ $i -eq 12 ]; then
-        echo "Job status check timed out. Last known status: $status_output"
-      fi
-    else
-      echo "Failed to extract job ID. Job may not have been submitted successfully."
-    fi
   else
     echo "JCL file for $program not found. Job not submitted."
   fi
